@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="vAxIgene: epitope-based vaccine design workspace (input, pipeline and results dashboard).">
+<title>vAxIgene Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+:root{
+  --canvas:#f2f4f8; --panel:#ffffff; --panel2:#eef1f7; --ink:#121826; --muted:#566075; --line:#d9dee8;
+  --accent:#4a3aa7; --accentink:#ffffff; --accent-soft:#e9e6f8;
+  --good:#0a7a0a; --good-soft:#e1f3e1; --warn:#8a5600; --warn-soft:#fdf0d4; --crit:#b32d2d;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --shadow:0 1px 2px rgba(18,24,38,.06),0 8px 24px rgba(18,24,38,.06);
+  --font-display:'Bricolage Grotesque',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --canvas:#0d111b; --panel:#141a28; --panel2:#1b2335; --ink:#e8ecf5; --muted:#93a0b8; --line:#26304a;
+  --accent:#9085e9; --accentink:#10102a; --accent-soft:#25264a;
+  --good:#5fd05f; --good-soft:#15301a; --warn:#f0b43c; --warn-soft:#38290c; --crit:#ec7a7a;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --canvas:#0d111b; --panel:#141a28; --panel2:#1b2335; --ink:#e8ecf5; --muted:#93a0b8; --line:#26304a;
+  --accent:#9085e9; --accentink:#10102a; --accent-soft:#25264a;
+  --good:#5fd05f; --good-soft:#15301a; --warn:#f0b43c; --warn-soft:#38290c; --crit:#ec7a7a;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35); color-scheme:dark}
+html,body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{overflow-x:hidden}
+*{box-sizing:border-box}
+.display{font-family:var(--font-display);font-weight:600;letter-spacing:-.015em;text-wrap:balance}
+.mono{font-family:var(--font-mono)}
+.muted{color:var(--muted)}
+.tabular{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lead{color:var(--muted);max-width:62ch;font-size:16px}
+.text-accent{color:var(--accent)} .text-warn{color:var(--warn)}
+button{font-family:inherit;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{min-height:100vh}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--canvas) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1240px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-logo{height:34px;width:auto;border-radius:9px;display:block;flex:none}
+.hero-logo{width:100%;max-height:200px;object-fit:cover;object-position:center 62%;border-radius:16px;display:block;border:1px solid var(--line)}
+.brand-mark{width:32px;height:32px;border-radius:9px;background:var(--accent);color:var(--accentink);display:grid;place-items:center;flex:none}
+.brand-name{font-size:20px;white-space:nowrap}
+.brand-name b{color:var(--accent);font-weight:700}
+.brand-sub{font-size:12px;color:var(--muted);white-space:nowrap}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--panel2);padding:4px;border-radius:12px;border:1px solid var(--line)}
+.tab{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:9px;border:0;background:transparent;color:var(--muted);font-weight:500;font-size:14px;white-space:nowrap;transition:background .2s,color .2s}
+.tab:hover{color:var(--ink)}
+.tab-on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
+.tab-short{display:none}
+.tab-st{margin-left:2px;color:var(--accent)}
+.tab-done{width:16px;height:16px;border-radius:50%;background:var(--good);color:var(--panel);display:inline-grid;place-items:center}
+.tab-new{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);display:grid;place-items:center;flex:none}
+.icon-btn:hover{background:var(--panel2)}
+.main{max-width:1240px;margin:0 auto;padding:28px 16px 64px}
+.view{animation:viewIn .35s cubic-bezier(.2,.7,.2,1) both}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (max-width:900px){.brand-sub{display:none}}
+@media (max-width:720px){
+  .topbar-in{gap:8px}.brand-name{display:none}
+  .tabs{flex:1;margin-left:0}.tab{flex:1;justify-content:center;padding:7px 6px;font-size:13px}
+  .tab-label{display:none}.tab-short{display:inline}
+}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;border:1px solid transparent;transition:background .15s,transform .1s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--accent);color:var(--accentink)}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{background:var(--panel2)}
+.btn-sm{padding:6px 12px;font-size:13px}
+
+.step-card{display:flex;gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.step-ico{width:36px;height:36px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+.last-run{display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;width:100%;padding:16px 18px;border-radius:14px;border:1px dashed var(--line);background:var(--panel);color:var(--ink);transition:border-color .2s}
+.last-run:hover{border-color:var(--accent)}
+.ribbon{display:flex;flex-wrap:wrap;gap:1px;font-family:var(--font-mono);font-size:13px;line-height:1.5;color:var(--muted);max-height:4.6em;overflow:hidden;letter-spacing:.06em;-webkit-mask-image:linear-gradient(90deg,#000 55%,transparent);mask-image:linear-gradient(90deg,#000 55%,transparent)}
+.ribbon span{opacity:.25;animation:ribbon 3.6s ease-in-out infinite}
+@keyframes ribbon{0%,100%{opacity:.25}50%{opacity:1;color:var(--accent)}}
+
+.test-banner{background:#e0524f;color:#fff;text-align:center;font-weight:600;padding:12px;border-radius:14px 14px 0 0;font-size:14px}
+.form-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px 24px;box-shadow:var(--shadow)}
+.label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;margin-bottom:6px}
+.req{color:var(--crit)}
+.field{width:100%;padding:11px 12px;border-radius:9px;border:1px solid var(--line);background:var(--canvas);color:var(--ink);font-size:14px;transition:border-color .15s,box-shadow .15s}
+.field:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+textarea.field{resize:vertical;min-height:84px}
+select.field{appearance:none;-webkit-appearance:none;padding-right:36px}
+.select-wrap{position:relative}
+.select-caret{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);display:grid}
+.form-err{display:flex;align-items:center;gap:6px;margin-top:12px;color:var(--crit);font-size:13px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px;margin-bottom:16px}
+.tile{display:flex;flex-direction:column;gap:4px;align-items:flex-start;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;min-width:0}
+.tile-v{font-size:30px;line-height:1.1}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.pill-good{background:var(--good-soft);color:var(--good);border-color:transparent}
+.pill-warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.note-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:var(--accent-soft);color:var(--ink);font-size:13px}
+.note-bar svg{flex:none;color:var(--accent)}
+
+.attn{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attn li{display:flex;gap:12px;padding:12px 14px;border-radius:12px;background:var(--panel2)}
+.attn-ico{flex:none;margin-top:1px}
+.attn-warn .attn-ico{color:var(--warn)}.attn-info .attn-ico{color:var(--accent)}
+.attn-warn{border-left:3px solid var(--warn)}.attn-info{border-left:3px solid var(--accent)}
+
+/* pipeline */
+.lane{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.lane-dim{opacity:.6;border-style:dashed}
+.lane-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.lane-swatch{width:6px;align-self:stretch;min-height:34px;border-radius:3px;flex:none}
+.lane-track{display:flex;flex-wrap:wrap;align-items:center;gap:6px 0}
+.conn{width:14px;height:2px;background:var(--line);flex:none;transition:background .3s}
+.conn-on{background:var(--good)}
+.node{position:relative;display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:9px;border:1px solid var(--line);background:var(--canvas);font-size:12.5px;font-weight:500;overflow:hidden;transition:background .25s,border-color .25s,color .25s}
+.node-label{position:relative;z-index:1}
+.node-dot{width:7px;height:7px;border-radius:50%;background:var(--line);flex:none}
+.node-ico{display:grid;flex:none;position:relative;z-index:1}
+.node-pending,.node-off{color:var(--muted)}
+.node-running{border-color:var(--accent);color:var(--ink);background:var(--accent-soft)}
+.node-running .node-ico{color:var(--accent)}
+.node-done{border-color:color-mix(in srgb,var(--good) 55%,var(--line));color:var(--ink)}
+.node-done .node-ico{color:var(--good)}
+.node-skipped{border-style:dashed;border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+.node-off{border-style:dashed}
+.node-tag{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:5px;background:var(--panel2);color:var(--muted);position:relative;z-index:1}
+.node-skipped .node-tag{background:transparent;color:var(--warn)}
+.node-bar{position:absolute;left:0;bottom:0;height:3px;background:var(--accent);transition:width .1s linear}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.meter{height:8px;border-radius:99px;background:var(--panel2);overflow:hidden}
+.meter span{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .15s linear}
+.stages{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:13px}
+.stage{display:flex;align-items:center;gap:10px;color:var(--muted)}
+.stage-mark{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none;color:var(--panel)}
+.stage-running{color:var(--ink);font-weight:600}.stage-running .stage-mark{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.stage-done{color:var(--ink)}.stage-done .stage-mark{background:var(--good);border-color:var(--good)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:12.5px;font-weight:500}
+.chip:hover:not(:disabled){background:var(--panel2)}
+.chip-on{background:var(--accent);border-color:var(--accent);color:var(--accentink)}
+.chip-on:hover:not(:disabled){background:var(--accent)!important}
+.log-panel{display:flex;flex-direction:column;gap:10px}
+.log{max-height:280px;overflow-y:auto;display:grid;gap:6px;font-size:12px;align-content:start}
+.log-line{display:flex;gap:8px}.log-t{color:var(--muted);font-family:var(--font-mono);flex:none;width:40px}
+.log-skipped .log-m{color:var(--warn)}
+.done-banner{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 40%,transparent)}
+.done-banner>svg{color:var(--good)}
+
+/* results */
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--ink);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px}
+.sw-solid{background:var(--ink)}.sw-light{background:var(--ink);opacity:.3}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%}
+.dot-fill{background:var(--ink)}.dot-ring{border:2.5px solid var(--ink);background:var(--panel)}
+.chart-read{margin-top:12px;font-size:13px;color:var(--muted);min-height:20px}
+.funnel{display:grid;gap:4px;margin-top:14px}
+.funnel-head,.funnel-row{display:grid;grid-template-columns:130px minmax(0,1fr) 80px;gap:14px;align-items:center}
+.funnel-head{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;padding:0 8px}
+.funnel-row{padding:7px 8px;border-radius:9px;font-size:13px;outline:none}
+.funnel-row.on,.funnel-row:focus-visible{background:var(--panel2)}
+.funnel-bars{position:relative;height:22px;display:block}
+.fbar{position:absolute;left:0;top:0;height:22px;border-radius:0 4px 4px 0}
+.fbar-top{top:6px;height:10px}
+.fval{position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:12px;background:var(--panel);padding:0 4px;border-radius:4px}
+.funnel-row.on .fval{background:var(--panel2)}
+@media (max-width:560px){.funnel-head,.funnel-row{grid-template-columns:92px minmax(0,1fr) 44px;gap:8px}.funnel-head span:nth-child(3){font-size:10px}}
+.scroll-x{overflow-x:auto}
+.map-svg{width:100%;min-width:640px;height:auto;display:block}
+.grid-line{stroke:var(--line);stroke-width:1}
+.axis-line{stroke:var(--muted);stroke-width:1}
+.ax-text{fill:var(--muted);font-size:12px;font-family:var(--font-mono)}
+.row-text{fill:var(--ink);font-size:12.5px;font-family:var(--font-body)}
+.mark{cursor:pointer;transition:r .12s}
+.stack{display:flex;gap:2px;height:22px;border-radius:6px;overflow:hidden}
+.stack>span{min-width:3px}.stack-sm{height:14px}
+.seqbox{margin-top:14px;padding:14px;border-radius:12px;background:var(--panel2);font-size:13.5px;line-height:2;word-break:break-all;display:flex;flex-wrap:wrap;gap:3px 2px}
+.seg{padding:0 3px;border-radius:4px;border-bottom:3px solid transparent;cursor:default;transition:background .12s}
+.seg-adj{border-color:var(--accent)}.seg-htl{border-color:var(--s2)}.seg-bc{border-color:var(--s4)}.seg-ifn{border-color:var(--s3)}
+.seg-ctl{border-color:var(--s1)}
+.ctl-block{margin-bottom:6px}
+.seg-lnk{color:var(--muted)}
+.seg.on{background:var(--panel);box-shadow:0 0 0 1px var(--line)}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+.tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+.tbl th.text-right{text-align:right}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.pdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:0;margin:0}
+.kv dt,.kv dd{margin:0;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv dt{color:var(--muted)}.kv dd{text-align:right}
+.dock{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:12px;background:var(--panel2);color:var(--ink);text-decoration:none;border:1px solid transparent}
+.dock:hover{border-color:var(--accent)}
+
+
+.form-card{position:relative;overflow:hidden;background-image:radial-gradient(circle at 100% 0,color-mix(in srgb,var(--s3) 14%,transparent),transparent 45%),radial-gradient(circle at 0 100%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 45%),radial-gradient(color-mix(in srgb,var(--muted) 22%,transparent) 1px,transparent 1.5px);background-size:auto,auto,18px 18px}
+.form-card>*{position:relative}
+.form-top{display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.helix{width:96px;height:46px;flex:none;overflow:visible}
+.helix-a,.helix-b{fill:none;stroke-width:2.5;stroke-linecap:round}
+.helix-a{stroke:var(--s1)}.helix-b{stroke:var(--accent)}
+.helix-rung{stroke-width:2;stroke-linecap:round}
+.helix{animation:helixDrift 6s ease-in-out infinite}
+@keyframes helixDrift{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.bio-tag{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);letter-spacing:.02em}
+.form-foot{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:20px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted);font-family:var(--font-mono)}
+.form-foot span{display:inline-flex;align-items:center;gap:6px}
+.form-foot .dot{width:8px;height:8px}
+
+/* overlay */
+.overlay{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--canvas) 78%,transparent);backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px;animation:viewIn .2s both}
+.overlay-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;width:100%;max-width:340px;box-shadow:var(--shadow);text-align:center}
+.overlay-spin{width:52px;height:52px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin:0 auto}
+.overlay-steps{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:8px;text-align:left;font-size:14px}
+.ostep{display:flex;align-items:center;gap:10px;color:var(--muted)}
+.ostep-ico{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:var(--panel);flex:none}
+.ostep-run{color:var(--ink)}.ostep-run .ostep-ico{border-color:var(--accent)}
+.ostep-done{color:var(--ink)}.ostep-done .ostep-ico{background:var(--good);border-color:var(--good)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config={corePlugins:{preflight:true},theme:{extend:{colors:{canvas:'var(--canvas)',panel:'var(--panel)',panel2:'var(--panel2)',ink:'var(--ink)',muted:'var(--muted)',line:'var(--line)',accent:'var(--accent)',accentink:'var(--accentink)',good:'var(--good)',warn:'var(--warn)',crit:'var(--crit)'},fontFamily:{display:['var(--font-display)'],sans:['var(--font-body)'],mono:['var(--font-mono)']}}}};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/lucide-react@0.468.0/dist/umd/lucide-react.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const DATA = {"tracks":{"ifn":[[26,43],[63,85],[176,208],[296,310],[340,356],[361,376],[490,507],[541,566],[698,713],[758,775],[843,858],[945,965],[1234,1252],[1265,1286]],"bc":[[17,46],[70,77],[85,90],[95,104],[123,132],[146,150],[165,168],[176,184],[194,216],[229,231],[254,256],[282,288],[322,325],[334,340],[346,350],[361,415],[436,446],[458,517],[547,568],[632,636],[655,674],[687,715],[726,739],[750,753],[757,768],[801,827],[835,845],[853,875],[966,973],[1013,1020],[1061,1070],[1125,1131],[1139,1151],[1163,1205],[1282,1295]],"sa":[[34,51],[55,67],[72,81],[94,108],[183,219],[223,233],[267,276],[280,293],[372,382],[420,433],[437,453],[459,496],[501,521],[544,553],[556,571],[595,618],[628,642],[648,676],[703,718],[735,744],[755,765],[778,787],[800,812],[839,851],[860,869],[871,881],[944,961],[970,988],[1049,1067],[1119,1135],[1144,1171],[1180,1190],[1225,1249],[1282,1298]],"an":[[2,14],[28,37],[121,130],[152,178],[244,256],[266,282],[291,315],[325,351],[356,384],[394,427],[447,462],[488,506],[568,582],[585,608],[614,634],[638,651],[670,709],[764,781],[829,840],[852,861],[878,899],[986,995],[1006,1015],[1032,1044],[1072,1123],[1150,1164],[1213,1230],[1248,1288],[1290,1300]]},"eps":[{"t":"ctl","p":"QSSPIIPGF","a":0.8017,"al":0.48,"tx":-0.22,"pos":817,"n":6,"rk":0.06},{"t":"ctl","p":"KELGNYTYY","a":0.6253,"al":0.4175,"tx":-0.61,"pos":1233,"n":3,"rk":0.06},{"t":"ctl","p":"RTYSNITITY","a":1.2564,"al":0.485,"tx":-0.97,"pos":58,"n":12,"rk":0.01},{"t":"ctl","p":"MEAAYTSSL","a":0.5798,"al":0.38,"tx":-0.88,"pos":901,"n":3,"rk":0.05},{"t":"ctl","p":"FSFGVTQEY","a":1.6924,"al":0.37,"tx":-1.2,"pos":750,"n":10,"rk":0.01},{"t":"htl","p":"GEMRLASIAFNHPIQ","a":0.6439,"al":0.4075,"tx":-0.81,"pos":719,"n":1,"rk":0.12},{"t":"htl","p":"SVGEMRLASIAFNHP","a":0.9945,"al":0.4925,"tx":-0.92,"pos":717,"n":1,"rk":0.31},{"t":"htl","p":"NITITYQGLFPYQGD","a":1.15,"al":0.4775,"tx":-0.88,"pos":62,"n":1,"rk":0.32},{"t":"htl","p":"IEDLLFDKVTIAPGY","a":0.71,"al":0.4975,"tx":-0.78,"pos":849,"n":3,"rk":1.3},{"t":"htl","p":"VGYYSDDGNYYCLRA","a":0.579,"al":0.4675,"tx":-0.75,"pos":607,"n":1,"rk":0.54},{"t":"bc","p":"NNTRIVD","a":1.1061,"al":0.495,"tx":-0.54,"pos":1126},{"t":"bc","p":"SFDVESG","a":1.6516,"al":0.47100000000000003,"tx":-0.93,"pos":335},{"t":"bc","p":"SYPSMKSDLS","a":0.5238,"al":0.4375,"tx":-0.5,"pos":424},{"t":"bc","p":"YFSYPSMKSD","a":0.7185,"al":0.4975,"tx":-0.34,"pos":422},{"t":"bc","p":"STMSQYSRST","a":0.6054,"al":0.4975,"tx":-0.72,"pos":651},{"t":"ifn","p":"FGITVQYGTDTNSVC","a":0.9434,"al":0.4925,"tx":-1.01,"pos":541,"sc":0.6},{"t":"ifn","p":"TPATDCSDGNYNRNA","a":0.5783,"al":0.49,"tx":-0.58,"pos":194,"sc":0.6},{"t":"ifn","p":"EPRGNCPANSYTSFT","a":0.6294,"al":0.4975,"tx":-0.89,"pos":177,"sc":0.62},{"t":"ifn","p":"TDTNSVCPKLEFAND","a":0.7149,"al":0.4914010989010989,"tx":-0.46,"pos":549,"sc":0.6},{"t":"ifn","p":"GNYTYYNKWPWYIWL","a":0.6944,"al":0.475,"tx":-0.4,"pos":1236,"sc":0.61}]};
+</script>
+<script>
+const LOGO_MARK = "data:image/jpeg;base64,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";
+'use strict';
+/* vAxIgene: epitope vaccine design workspace (React 18, no JSX build step) */
+const h = React.createElement;
+const { useState, useEffect, useRef } = React;
+
+/* ------------------------------------------------------------------ icons */
+const FALLBACK = {
+  Check: 'M20 6 9 17l-5-5',
+  ArrowRight: 'M5 12h14 M12 5l7 7-7 7',
+  Play: 'M6 3l14 9-14 9z',
+  Sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M12 2v2 M12 20v2 M4.9 4.9l1.4 1.4 M17.7 17.7l1.4 1.4 M2 12h2 M20 12h2 M4.9 19.1l1.4-1.4 M17.7 6.3l1.4-1.4',
+  Moon: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z',
+  TriangleAlert: 'M12 9v4 M12 17h.01 M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+  Loader2: 'M21 12a9 9 0 1 1-6.2-8.6',
+  RotateCcw: 'M3 12a9 9 0 1 0 3-6.7L3 8 M3 3v5h5',
+  Copy: 'M8 8h12v12H8z M4 16V4h12',
+  ExternalLink: 'M15 3h6v6 M10 14 21 3 M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6',
+  FastForward: 'M13 19V5l9 7z M2 19V5l9 7z',
+  Pause: 'M6 4h4v16H6z M14 4h4v16h-4z',
+  Info: 'M12 16v-4 M12 8h.01 M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z'
+};
+
+function Icon(props) {
+  const names = Array.isArray(props.n) ? props.n : [props.n];
+  const size = props.size || 16;
+  const lib = window.lucideReact;
+  if (lib) {
+    for (let i = 0; i < names.length; i++) {
+      if (lib[names[i]]) {
+        return h(lib[names[i]], { size: size, className: props.className || '', strokeWidth: props.sw || 2, 'aria-hidden': true });
+      }
+    }
+  }
+  const d = FALLBACK[names[0]];
+  return h('svg', {
+    width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+    strokeWidth: props.sw || 2, strokeLinecap: 'round', strokeLinejoin: 'round',
+    className: props.className || '', 'aria-hidden': true
+  }, d ? h('path', { d: d }) : null);
+}
+
+/* ------------------------------------------------------------- constants */
+const REPORT = {
+  id: 'YEV35344.1',
+  length: 1300,
+  conserved: 53,
+  constructLen: 270,
+  mw: 28557.71, pi: 8.19, neg: 23, pos: 25, aliphatic: 47.81, gravy: -0.596,
+  solubleProb: 0.7717884182929993,
+  tlr2: 'https://gramm.compbio.ku.edu/results/139878/0',
+  tlr4: 'https://gramm.compbio.ku.edu/results/139879/0'
+};
+
+const PATH = {
+  ctl: { label: 'CTL', long: 'CTL · MHC-I', v: 'var(--s1)' },
+  htl: { label: 'HTL', long: 'HTL · MHC-II', v: 'var(--s2)' },
+  ifn: { label: 'IFN-γ', long: 'IFN-γ inducer', v: 'var(--s3)' },
+  bc: { label: 'B-cell', long: 'B-cell', v: 'var(--s4)' }
+};
+
+const SEGS = [
+  ['adj', 'AKFVAAWTLKAAA'], ['lnk', 'EAAAK'],
+  ['htl', 'GEMRLASIAFNHPIQ'], ['lnk', 'GPGPG'], ['htl', 'SVGEMRLASIAFNHP'], ['lnk', 'GPGPG'],
+  ['htl', 'NITITYQGLFPYQGD'], ['lnk', 'GPGPG'], ['htl', 'IEDLLFDKVTIAPGY'], ['lnk', 'GPGPG'],
+  ['htl', 'VGYYSDDGNYYCLRA'], ['lnk', 'EAAAK'],
+  ['bc', 'NNTRIVD'], ['lnk', 'KK'], ['bc', 'SFDVESG'], ['lnk', 'KK'], ['bc', 'SYPSMKSDLS'], ['lnk', 'KK'],
+  ['bc', 'YFSYPSMKSD'], ['lnk', 'KK'], ['bc', 'STMSQYSRST'], ['lnk', 'EAAAK'],
+  ['ifn', 'FGITVQYGTDTNSVC'], ['lnk', 'GPGPG'], ['ifn', 'TPATDCSDGNYNRNA'], ['lnk', 'GPGPG'],
+  ['ifn', 'EPRGNCPANSYTSFT'], ['lnk', 'GPGPG'], ['ifn', 'TDTNSVCPKLEFAND'], ['lnk', 'GPGPG'],
+  ['ifn', 'GNYTYYNKWPWYIWL']
+];
+const CONSTRUCT = SEGS.map(function (s) { return s[1]; }).join('');
+/* MHC-I Human Construct table in the saved report: 5 CTL epitopes joined with KK linkers */
+const CTL_SEGS = [['ctl', 'QSSPIIPGF'], ['lnk', 'KK'], ['ctl', 'KELGNYTYY'], ['lnk', 'KK'], ['ctl', 'RTYSNITITY'], ['lnk', 'KK'], ['ctl', 'MEAAYTSSL'], ['lnk', 'KK'], ['ctl', 'FSFGVTQEY']];
+const CTL_CONSTRUCT = CTL_SEGS.map(function (s) { return s[1]; }).join('');
+
+const INPUT_TYPES = [
+  { v: 'genbank', label: 'GenBank', hint: 'Accession ID, or organism and protein name', ph: 'e.g. YEV35344.1' },
+  { v: 'blast', label: 'BLAST', hint: 'Amino-acid sequence to search against NCBI', ph: 'Paste an amino-acid sequence' },
+  { v: 'sequence', label: 'Sequence', hint: 'FASTA or plain amino-acid sequence, used as given', ph: 'Paste a FASTA or amino-acid sequence' },
+  { v: 'uniprot', label: 'UniProt', hint: 'UniProt accession ID', ph: 'e.g. P0DTC2' }
+];
+const DEMO = { type: 'genbank', query: 'YEV35344.1' };
+
+/* ----------------------------------------------------- pipeline definition */
+function chain(start, items) {
+  const out = [];
+  let cursor = start, prevStart = start;
+  items.forEach(function (it) {
+    const o = it[4] || {};
+    const s = o.same ? prevStart : cursor;
+    const node = { id: it[0], label: it[1], s: s, d: it[2], detail: it[3] || '', skip: !!o.skip, off: !!o.off };
+    prevStart = s;
+    if (!o.skip) cursor = Math.max(cursor, s + it[2]);
+    out.push(node);
+  });
+  return out;
+}
+const SAME = { same: true };
+const SKIP = { skip: true };
+
+const LANES = [
+  { id: 'ingest', title: 'Sequences retrieval, alignment and prep', sub: 'Fetch the record, align, keep conserved regions', wide: true, color: 'var(--accent)',
+    nodes: chain(0, [
+      ['form', 'On form submission', 0.8, 'Query accepted'],
+      ['retr', 'Sequences Retrieval', 2.6, 'Record retrieved and parsed'],
+      ['aln', 'Alignment', 3.6, '53 conserved peptides, 1,300 aa'],
+      ['phys', 'Physicochemical Properties', 1.4, 'Properties computed']
+    ]) },
+  { id: 'ctl', title: 'CTL epitopes', sub: 'MHC-I human', color: PATH.ctl.v,
+    nodes: chain(8.4, [
+      ['c1', 'MHC-I Prediction', 2.4, 'Binding predictions returned'],
+      ['c3', 'Filter', 0.6, 'Percentile rank filter applied'],
+      ['c4', 'Epitope Grouping', 0.8, '440 peptides grouped by allele'],
+      ['c5', 'Immuno-Screening', 1.6, '87 pass antigen, allergen, toxin screen'],
+      ['c6', 'Construct', 0.8, '5 CTL epitopes joined with KK linkers (54 aa)']
+    ]) },
+  { id: 'htl', title: 'HTL epitopes', sub: 'MHC-II human', color: PATH.htl.v,
+    nodes: chain(8.4, [
+      ['h1', 'MHC-II Prediction', 2.8, 'Binding predictions returned'],
+      ['h3', 'Filter', 0.6, 'Percentile rank filter applied'],
+      ['h4', 'Epitope Grouping', 0.8, '357 15-mers grouped by allele'],
+      ['h5', 'Immuno-Screening', 1.6, '44 pass the screen'],
+      ['h6', 'Construct', 0.8, '5 HTL epitopes selected']
+    ]) },
+  { id: 'ifn', title: 'IFN-γ inducers', sub: 'Inducer prediction, human', color: PATH.ifn.v,
+    nodes: chain(8.4, [
+      ['i1', 'IFN-γ Prediction', 3.2, 'Inducer scores returned'],
+      ['i5', 'Filter', 0.6, '61 inducer windows (score ≥ 0.60)'],
+      ['i6', 'Immuno-Screening', 1.4, '11 pass the screen'],
+      ['i7', 'Construct', 0.6, '5 IFN-γ epitopes selected']
+    ]) },
+  { id: 'bc', title: 'B-cell epitopes', sub: 'Bepipred, Emini, Kolaskar', color: PATH.bc.v,
+    nodes: chain(8.4, [
+      ['b1', 'Bepipred', 2.4, 'Linear B-cell regions'],
+      ['b2', 'Emini Surface', 2.4, 'Surface accessibility', SAME],
+      ['b3', 'Kolaskar Antigenicity', 2.6, 'Antigenic windows', SAME],
+      ['b5', 'Score Filters', 1, '62 linear, 193 surface, 220 antigenic windows'],
+      ['b6', 'Immuno-Screening', 1.6, '4 + 17 + 50 pass the screen'],
+      ['b8', 'B-Cell Construct', 0.6, '5 B-cell epitopes selected']
+    ]) },
+  { id: 'assemble', title: 'Vaccine assembly and checks', sub: 'Assemble, physicochemical, solubility', color: 'var(--accent)',
+    nodes: chain(15.2, [
+      ['v2', 'Vaccine Construct Assembly', 0.8, '270-aa construct assembled'],
+      ['v4', 'Construct Physicochemical Properties', 0.8, 'pI 8.19, 28.56 kDa'],
+      ['v5', 'Solubility Assessment', 0.8, 'Predicted insoluble (0.77)']
+    ]) },
+  { id: 'dock', title: 'Structure and docking', sub: 'Construct 3D model, TLR2 and TLR4 docking', color: 'var(--accent)',
+    nodes: chain(16, [
+      ['d2', '3D Structure', 2.6, 'Model built'],
+      ['d4', 'Molecular Docking', 3.6, 'TLR2 and TLR4 docked (GRAMM jobs 139878, 139879)']
+    ]) },
+  { id: 'send', title: 'Delivery', sub: 'HTML report and email', wide: true, color: 'var(--accent)',
+    nodes: chain(22.2, [
+      ['r1', 'Data Report', 0.6, 'Human vaccine report generated'],
+      ['r2', 'Send an Email', 0.8, 'Report emailed']
+    ]) }
+];
+
+const TOTAL = (function () {
+  let m = 0;
+  LANES.forEach(function (l) { l.nodes.forEach(function (n) { if (!n.off) m = Math.max(m, n.s + n.d); }); });
+  return m;
+})();
+
+const STAGES = [
+  { n: 'Sequences retrieval', a: 0, b: 3.4 },
+  { n: 'Alignment and conservation', a: 3.4, b: 8.4 },
+  { n: 'Epitopes Predictions', a: 8.4, b: 15.2 },
+  { n: 'Assemble and validate', a: 15.2, b: 22.2 },
+  { n: 'Report and email', a: 22.2, b: TOTAL }
+];
+
+function nodeState(n, t) {
+  if (n.off) return 'off';
+  if (n.skip) return t >= n.s ? 'skipped' : 'pending';
+  if (t >= n.s + n.d) return 'done';
+  if (t >= n.s) return 'running';
+  return 'pending';
+}
+
+function buildLog(t, query) {
+  const ev = [];
+  LANES.forEach(function (l) {
+    l.nodes.forEach(function (n) {
+      if (n.off) return;
+      const st = nodeState(n, t);
+      if (st === 'done' || st === 'skipped') {
+        const detail = n.id === 'form' ? 'Query: ' + (query || DEMO.query) : n.detail;
+        ev.push({ at: n.s + n.d, st: st, text: n.label + (detail ? ' · ' + detail : '') });
+      }
+    });
+  });
+  ev.sort(function (a, b) { return a.at - b.at; });
+  return ev.slice(-14);
+}
+
+/* ------------------------------------------------------------------ small */
+function fmt(n, d) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: d || 0, maximumFractionDigits: d === undefined ? 2 : d }); }
+
+function Pill(props) {
+  return h('span', { className: 'pill pill-' + (props.tone || 'neutral') }, props.icon ? h(Icon, { n: props.icon, size: 12 }) : null, props.children);
+}
+
+function copyText(text, done) {
+  function fallback() {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta); done(ok);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+  } else { fallback(); }
+}
+
+/* ============================================================ VIEW 1: INPUT */
+function InputView(props) {
+  const form = props.form, setForm = props.setForm;
+  const [err, setErr] = useState('');
+  const type = INPUT_TYPES.filter(function (x) { return x.v === form.type; })[0];
+
+  function submit(e) {
+    e.preventDefault();
+    if (!form.type) { setErr('Choose an input type.'); return; }
+    if (!form.query.trim()) { setErr('Enter a sequence, accession ID or organism and protein name.'); return; }
+    setErr('');
+    props.onSubmit();
+  }
+
+  return h('div', { className: 'grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] items-start' },
+    h('section', { className: 'min-w-0 flex flex-col gap-6' },
+      h('div', null,
+        h('p', { className: 'eyebrow' }, 'Epitope-based vaccine design'),
+        h('h1', { className: 'display text-3xl sm:text-4xl leading-tight mt-2' }, 'From one protein to a docked vaccine construct'),
+        h('p', { className: 'lead mt-3' }, 'Give the workflow a protein. It aligns related records, keeps the conserved regions, predicts T-cell and B-cell epitopes, screens each for antigenicity, allergenicity and toxicity, assembles a construct and docks it to TLR2 and TLR4.')
+      ),
+      h(Ribbon, null),
+      h('div', { className: 'grid gap-3 sm:grid-cols-3' },
+        [['Sequences Retrieval', 'GenBank, BLAST, raw sequence or UniProt', 'ClipboardList'],
+         ['Epitopes Predictions', 'MHC-I, MHC-II, IFN-γ and B-cell epitopes', 'Dna'],
+         ['Validate', 'Physicochemical, solubility, TLR docking', 'FlaskConical']].map(function (s) {
+          return h('div', { key: s[0], className: 'step-card' },
+            h('span', { className: 'step-ico' }, h(Icon, { n: s[2], size: 18 })),
+            h('div', { className: 'min-w-0' }, h('div', { className: 'font-semibold' }, s[0]), h('div', { className: 'muted text-sm' }, s[1])));
+        })),
+      h('button', { type: 'button', className: 'last-run', onClick: function () { props.go('results'); } },
+        h('div', { className: 'min-w-0' },
+          h('div', { className: 'eyebrow' }, 'Saved report'),
+          h('div', { className: 'mono text-lg font-medium mt-1' }, REPORT.id),
+          h('div', { className: 'muted text-sm mt-1' }, '1,300 aa · 53 conserved peptides · 270-aa construct · TLR2 and TLR4 docking submitted')),
+        h(Icon, { n: 'ArrowRight', size: 18 }))
+    ),
+    h('section', { className: 'min-w-0' },
+      h('form', { className: 'form-card', onSubmit: submit, noValidate: true },
+        h('div', { className: 'form-top' },
+          h(Helix, null),
+          h('div', { className: 'min-w-0' },
+            h('p', { className: 'eyebrow' }, 'Immunoinformatics workflow'),
+            h('h2', { className: 'display text-xl leading-tight mt-1' }, 'Epitope-Based Vaccine Design Workflow'))),
+        h('p', { className: 'muted text-sm mt-3' }, 'Choose your Input Type & paste your query below to begin processing'),
+        h('div', { className: 'tag-row' },
+          ['Bioinformatics', 'Reverse vaccinology', 'Biotechnology'].map(function (t) { return h('span', { key: t, className: 'bio-tag' }, t); })),
+        h('div', { className: 'mt-6' },
+          h('label', { htmlFor: 'input-type', className: 'label' }, h(Icon, { n: 'FlaskConical', size: 14 }), 'Input Type ', h('span', { className: 'req' }, '*')),
+          h('div', { className: 'select-wrap' },
+            h('select', { id: 'input-type', className: 'field', value: form.type, onChange: function (e) { setForm({ type: e.target.value, query: form.query }); } },
+              h('option', { value: '' }, 'Select an option ...'),
+              INPUT_TYPES.map(function (x) { return h('option', { key: x.v, value: x.v }, x.label); })),
+            h('span', { className: 'select-caret' }, h(Icon, { n: 'ChevronDown', size: 16 }))),
+          type ? h('p', { className: 'muted text-xs mt-1.5' }, type.hint) : null),
+        h('div', { className: 'mt-5' },
+          h('label', { htmlFor: 'search-query', className: 'label' }, h(Icon, { n: 'Dna', size: 14 }), 'Search Query ', h('span', { className: 'req' }, '*')),
+          h('textarea', { id: 'search-query', className: 'field mono', rows: 3, value: form.query, placeholder: type ? type.ph : 'Enter Sequence, Accession ID, or Name of Organism & Name of Protein',
+            onChange: function (e) { setForm({ type: form.type, query: e.target.value }); } })),
+        err ? h('p', { className: 'form-err', role: 'alert' }, h(Icon, { n: ['TriangleAlert', 'AlertTriangle'], size: 14 }), err) : null,
+        h('div', { className: 'mt-6 flex flex-col gap-3' },
+          h('button', { type: 'submit', className: 'btn btn-primary w-full justify-center' }, 'Submit'),
+          h('button', { type: 'button', id: 'fill-demo', className: 'btn btn-ghost w-full justify-center', onClick: function () { setForm({ type: DEMO.type, query: DEMO.query }); setErr(''); } },
+            h(Icon, { n: 'Sparkles', size: 16 }), 'Fill Demo Data')),
+        h('div', { className: 'form-foot' },
+          [['MHC-I', 'var(--s1)'], ['MHC-II', 'var(--s2)'], ['IFN-γ', 'var(--s3)'], ['B-cell', 'var(--s4)'], ['TLR2/4 docking', 'var(--accent)']].map(function (x) {
+            return h('span', { key: x[0] }, h('i', { className: 'dot', style: { background: x[1] } }), x[0]);
+          }))
+      ),
+      h('p', { className: 'muted text-xs text-center mt-3' }, 'Form automated with n8n. This prototype simulates the workflow in the browser.')
+    ));
+}
+
+function Helix() {
+  const W = 120, H = 56, n = 14, a = [], b = [], rungs = [];
+  for (let i = 0; i <= 60; i++) {
+    const x = (i / 60) * W, ph = (i / 60) * Math.PI * 4;
+    a.push((i ? 'L' : 'M') + x.toFixed(1) + ' ' + (H / 2 + Math.sin(ph) * 20).toFixed(1));
+    b.push((i ? 'L' : 'M') + x.toFixed(1) + ' ' + (H / 2 - Math.sin(ph) * 20).toFixed(1));
+  }
+  for (let i = 0; i <= n; i++) {
+    const x = (i / n) * W, ph = (i / n) * Math.PI * 4, y = Math.sin(ph) * 20;
+    rungs.push(h('line', { key: i, x1: x, x2: x, y1: H / 2 + y, y2: H / 2 - y, className: 'helix-rung', style: { stroke: i % 2 ? 'var(--s3)' : 'var(--s4)', opacity: Math.abs(Math.cos(ph)) * 0.8 + 0.1 } }));
+  }
+  return h('svg', { className: 'helix', viewBox: '0 0 ' + W + ' ' + H, 'aria-hidden': true },
+    rungs,
+    h('path', { d: a.join(' '), className: 'helix-a' }),
+    h('path', { d: b.join(' '), className: 'helix-b' }));
+}
+
+function Ribbon() {
+  const letters = CONSTRUCT.slice(0, 120).split('');
+  return h('div', { className: 'ribbon', 'aria-hidden': true },
+    letters.map(function (c, i) { return h('span', { key: i, style: { animationDelay: (i * 18) + 'ms' } }, c); }));
+}
+
+/* ======================================================= VIEW 2: PIPELINE */
+function NodeChip(props) {
+  const n = props.node, st = nodeState(n, props.t);
+  const pct = st === 'running' ? Math.min(100, ((props.t - n.s) / n.d) * 100) : 0;
+  let ico = null;
+  if (st === 'done') ico = h(Icon, { n: 'Check', size: 13, sw: 3 });
+  else if (st === 'running') ico = h(Icon, { n: ['LoaderCircle', 'Loader2'], size: 13, className: 'spin' });
+  else if (st === 'skipped') ico = h(Icon, { n: ['TriangleAlert', 'AlertTriangle'], size: 13 });
+  return h('div', { className: 'node node-' + st, title: n.detail || n.label },
+    ico ? h('span', { className: 'node-ico' }, ico) : h('span', { className: 'node-dot' }),
+    h('span', { className: 'node-label' }, n.label),
+    st === 'skipped' ? h('span', { className: 'node-tag' }, 'not executed') : null,
+    st === 'running' ? h('span', { className: 'node-bar', style: { width: pct + '%' } }) : null);
+}
+
+function LaneView(props) {
+  const l = props.lane, t = props.t;
+  const live = l.nodes.filter(function (n) { return !n.off; });
+  const done = live.filter(function (n) { const s = nodeState(n, t); return s === 'done' || s === 'skipped'; }).length;
+  const running = live.some(function (n) { return nodeState(n, t) === 'running'; });
+  return h('article', { className: 'lane' + (l.dim ? ' lane-dim' : '') + (l.wide ? ' lg:col-span-2' : '') },
+    h('header', { className: 'lane-head' },
+      h('span', { className: 'lane-swatch', style: { background: l.color } }),
+      h('div', { className: 'min-w-0 flex-1' },
+        h('h3', { className: 'font-semibold leading-tight' }, l.title),
+        h('p', { className: 'muted text-xs mt-0.5' }, l.sub)),
+      l.dim ? h(Pill, { tone: 'neutral' }, 'Not in this report')
+        : h('span', { className: 'mono text-xs ' + (running ? 'text-accent' : 'muted') }, done + '/' + live.length)),
+    h('div', { className: 'lane-track' },
+      l.nodes.map(function (n, i) {
+        return h(React.Fragment, { key: n.id },
+          i > 0 ? h('span', { className: 'conn' + (nodeState(l.nodes[i - 1], t) === 'done' ? ' conn-on' : '') }) : null,
+          h(NodeChip, { node: n, t: t }));
+      })));
+}
+
+function PipelineView(props) {
+  const run = props.run, t = run.t, logRef = useRef(null);
+  const log = buildLog(t, run.query);
+  const pct = Math.round((t / TOTAL) * 100);
+  const idle = run.phase === 'idle';
+
+  useEffect(function () { if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight; }, [log.length]);
+
+  return h('div', { className: 'grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] items-start' },
+    h('section', { className: 'min-w-0 flex flex-col gap-4' },
+      h('div', { className: 'flex flex-wrap items-end justify-between gap-3' },
+        h('div', null,
+          h('p', { className: 'eyebrow' }, 'n8n workflow'),
+          h('h1', { className: 'display text-2xl sm:text-3xl mt-1' }, 'Pipeline execution')),
+        idle ? h('button', { type: 'button', className: 'btn btn-primary', onClick: props.startDemo }, h(Icon, { n: 'Play', size: 16 }), 'Run with demo data') : null),
+      run.phase === 'done' ? h('div', { className: 'done-banner', role: 'status' },
+        h(Icon, { n: ['CircleCheck', 'CheckCircle2'], size: 20 }),
+        h('div', { className: 'flex-1 min-w-0' },
+          h('div', { className: 'font-semibold' }, 'Run complete'),
+          h('div', { className: 'text-sm muted' }, props.autoGo ? 'Opening the results dashboard in a moment.' : 'The report is ready.')),
+        props.autoGo ? h('button', { type: 'button', className: 'btn btn-ghost', onClick: props.cancelAuto }, 'Stay here') : null,
+        h('button', { type: 'button', className: 'btn btn-primary', onClick: function () { props.go('results'); } }, 'Open results', h(Icon, { n: 'ArrowRight', size: 16 }))) : null,
+      h('div', { className: 'grid gap-4 lg:grid-cols-2' },
+        LANES.map(function (l) { return h(LaneView, { key: l.id, lane: l, t: idle ? -1 : t }); }))
+    ),
+    h('aside', { className: 'min-w-0 flex flex-col gap-4 lg:sticky lg:top-20' },
+      h('div', { className: 'panel' },
+        h('div', { className: 'flex items-baseline justify-between' },
+          h('span', { className: 'eyebrow' }, 'Run status'),
+          h('span', { className: 'mono text-sm' }, idle ? 'idle' : (run.phase === 'done' ? 'complete' : run.paused ? 'paused' : 'running'))),
+        h('div', { className: 'mono text-3xl mt-2 tabular' }, (idle ? 0 : pct) + '%'),
+        h('div', { className: 'meter mt-2', role: 'progressbar', 'aria-valuenow': pct, 'aria-valuemin': 0, 'aria-valuemax': 100 },
+          h('span', { style: { width: (idle ? 0 : pct) + '%' } })),
+        run.query ? h('p', { className: 'muted text-xs mt-3 break-words' }, 'Query ', h('span', { className: 'mono' }, run.query)) : null,
+        h('ol', { className: 'stages mt-4' },
+          STAGES.map(function (s, i) {
+            const state = idle ? 'pending' : t >= s.b ? 'done' : t >= s.a ? 'running' : 'pending';
+            return h('li', { key: s.n, className: 'stage stage-' + state },
+              h('span', { className: 'stage-mark' }, state === 'done' ? h(Icon, { n: 'Check', size: 11, sw: 3 }) : null),
+              h('span', null, s.n));
+          })),
+        h('div', { className: 'mt-4 flex flex-wrap gap-2' },
+          [1, 2, 4].map(function (sp) {
+            return h('button', { key: sp, type: 'button', className: 'chip' + (run.speed === sp ? ' chip-on' : ''), onClick: function () { props.setSpeed(sp); } }, sp + '×');
+          }),
+          h('button', { type: 'button', className: 'chip', disabled: run.phase !== 'running', onClick: props.togglePause },
+            h(Icon, { n: run.paused ? 'Play' : 'Pause', size: 12 }), run.paused ? 'Resume' : 'Pause'),
+          h('button', { type: 'button', className: 'chip', disabled: idle || run.phase === 'done', onClick: props.skip },
+            h(Icon, { n: 'FastForward', size: 12 }), 'Skip'),
+          h('button', { type: 'button', className: 'chip', disabled: idle, onClick: props.replay },
+            h(Icon, { n: 'RotateCcw', size: 12 }), 'Replay'))),
+      h('div', { className: 'panel log-panel' },
+        h('span', { className: 'eyebrow' }, 'Execution log'),
+        h('div', { className: 'log', ref: logRef, 'aria-live': 'polite' },
+          log.length === 0 ? h('p', { className: 'muted text-xs' }, idle ? 'Waiting for a query. Submit the form or run with demo data.' : 'Starting execution…')
+            : log.map(function (e, i) {
+              return h('div', { key: i + e.text, className: 'log-line log-' + e.st },
+                h('span', { className: 'log-t' }, e.at.toFixed(1) + 's'),
+                h('span', { className: 'log-m' }, (e.st === 'skipped' ? '! ' : '✓ ') + e.text));
+            })))
+    ));
+}
+
+/* ======================================================= VIEW 3: RESULTS */
+const FUNNEL = [
+  { k: 'ctl', label: 'CTL · MHC-I', cand: 440, pass: 87, inC: 5, unit: 'peptides' },
+  { k: 'htl', label: 'HTL · MHC-II', cand: 357, pass: 44, inC: 5, unit: '15-mers' },
+  { k: 'ifn', label: 'IFN-γ inducer', cand: 61, pass: 11, inC: 5, unit: 'windows' },
+  { k: 'bc', label: 'B-cell · linear', cand: 62, pass: 4, inC: 5, unit: 'regions', tag: 'Bepipred' },
+  { k: 'bc', label: 'B-cell · surface', cand: 193, pass: 17, inC: null, unit: 'windows', tag: 'Emini' },
+  { k: 'bc', label: 'B-cell · antigenic', cand: 220, pass: 50, inC: null, unit: 'windows', tag: 'Kolaskar' }
+];
+
+function Funnel() {
+  const [hv, setHv] = useState(null);
+  const max = 440;
+  const row = hv === null ? null : FUNNEL[hv];
+  return h('div', null,
+    h('div', { className: 'legend' },
+      h('span', null, h('i', { className: 'sw sw-light' }), 'Candidates'),
+      h('span', null, h('i', { className: 'sw sw-solid' }), 'Passed screening'),
+      h('span', { className: 'muted' }, 'Screen = antigenic, non-allergen, non-toxin')),
+    h('div', { className: 'funnel', role: 'table', 'aria-label': 'Candidates and screening results per pathway' },
+      h('div', { className: 'funnel-head', role: 'row' }, h('span', null, 'Pathway'), h('span', null, 'Candidates → passed'), h('span', { className: 'text-right' }, 'Selected')),
+      FUNNEL.map(function (r, i) {
+        const c = PATH[r.k].v;
+        return h('div', { key: i, role: 'row', className: 'funnel-row' + (hv === i ? ' on' : ''), onMouseEnter: function () { setHv(i); }, onMouseLeave: function () { setHv(null); }, onFocus: function () { setHv(i); }, onBlur: function () { setHv(null); }, tabIndex: 0 },
+          h('span', { className: 'funnel-name' }, r.label),
+          h('span', { className: 'funnel-bars' },
+            h('span', { className: 'fbar', style: { width: Math.max(1.5, (r.cand / max) * 100) + '%', background: c, opacity: 0.32 } }),
+            h('span', { className: 'fbar fbar-top', style: { width: Math.max(1.2, (r.pass / max) * 100) + '%', background: c } }),
+            h('span', { className: 'fval mono' }, r.cand + ' → ' + r.pass)),
+          h('span', { className: 'text-right mono fin' }, r.inC === null ? '' : r.inC));
+      })),
+    h('p', { className: 'chart-read' }, row
+      ? row.label + (row.tag ? ' (' + row.tag + ')' : '') + ': ' + row.cand + ' ' + row.unit + ' met the score filter, ' + row.pass + ' passed immuno-screening (' + Math.round((row.pass / row.cand) * 100) + '%).'
+      : 'Hover a row for the pass rate. B-cell epitopes (5 in the construct) are pooled from the Bepipred and Emini screens. The 5 CTL epitopes form their own 54-aa MHC-I construct.'));
+}
+
+function EpitopeMap() {
+  const [hv, setHv] = useState(null);
+  const W = 1000, L = 128, R = 20, plotW = W - L - R, rowH = 28, top = 12;
+  const x = function (p) { return L + (p / REPORT.length) * plotW; };
+  const rows = [
+    { id: 'ctl', label: 'CTL · MHC-I', k: 'ctl', mark: 'ctl' },
+    { id: 'htl', label: 'HTL · MHC-II', k: 'htl', mark: 'htl' },
+    { id: 'ifn', label: 'IFN-γ', k: 'ifn', bars: DATA.tracks.ifn, mark: 'ifn' },
+    { id: 'bcl', label: 'B · linear', k: 'bc', bars: DATA.tracks.bc },
+    { id: 'bcs', label: 'B · surface', k: 'bc', bars: DATA.tracks.sa },
+    { id: 'bca', label: 'B · antigenic', k: 'bc', bars: DATA.tracks.an },
+    { id: 'bcm', label: 'B · selected', k: 'bc', mark: 'bc' }
+  ];
+  const H = top + rows.length * rowH + 34;
+  const ticks = []; for (let p = 0; p <= 1300; p += 100) ticks.push(p);
+  const mk = hv;
+  return h('div', null,
+    h('div', { className: 'scroll-x' },
+      h('svg', { viewBox: '0 0 ' + W + ' ' + H, className: 'map-svg', role: 'img', 'aria-label': 'Epitope positions along the 1,300-residue conserved region' },
+        ticks.map(function (p) {
+          return h('g', { key: p },
+            h('line', { x1: x(p), x2: x(p), y1: top, y2: H - 26, className: 'grid-line' }),
+            p % 200 === 0 ? h('text', { x: x(p), y: H - 8, textAnchor: 'middle', className: 'ax-text' }, p) : null);
+        }),
+        rows.map(function (r, ri) {
+          const y = top + ri * rowH;
+          const c = PATH[r.k].v;
+          return h('g', { key: r.id },
+            h('text', { x: L - 10, y: y + rowH / 2 + 4, textAnchor: 'end', className: 'row-text' }, r.label),
+            r.bars ? r.bars.map(function (b, bi) {
+              return h('rect', { key: bi, x: x(b[0] - 1), y: y + 8, width: Math.max(2.5, x(b[1]) - x(b[0] - 1)), height: 12, rx: 2, style: { fill: c, opacity: 0.85 } });
+            }) : null,
+            r.mark ? DATA.eps.filter(function (e) { return e.t === r.mark && e.pos; }).map(function (e, ei) {
+              const cx = x(e.pos - 1 + e.p.length / 2);
+              const active = mk && mk.p === e.p;
+              return h('circle', { key: e.p, cx: cx, cy: y + rowH / 2, r: active ? 8 : 6, className: 'mark', style: { fill: e.t === 'ctl' ? 'var(--panel)' : c, stroke: e.t === 'ctl' ? c : 'var(--panel)', strokeWidth: e.t === 'ctl' ? 2.5 : 2 },
+                tabIndex: 0, onMouseEnter: function () { setHv(e); }, onMouseLeave: function () { setHv(null); }, onFocus: function () { setHv(e); }, onBlur: function () { setHv(null); } });
+            }) : null);
+        }),
+        h('line', { x1: L, x2: L + plotW, y1: H - 26, y2: H - 26, className: 'axis-line' }),
+        h('text', { x: L + plotW, y: H - 8, textAnchor: 'end', className: 'ax-text' }, ''))),
+    h('div', { className: 'legend mt-2' },
+      h('span', null, h('i', { className: 'sw sw-solid', style: { background: 'var(--ink)' } }), 'Bars: regions passing the score filter'),
+      h('span', null, h('i', { className: 'dot dot-fill' }), 'Filled dot: epitope in the construct'),
+      h('span', null, h('i', { className: 'dot dot-ring' }), 'Ring: CTL epitope (MHC-I construct)'),
+      h('span', { className: 'muted' }, 'Residue position along YEV35344.1 conserved region')),
+    h('p', { className: 'chart-read' }, mk
+      ? PATH[mk.t].long + ' · ' + mk.p + ' · aa ' + mk.pos + '–' + (mk.pos + mk.p.length - 1) + (mk.a ? ' · antigenicity ' + mk.a.toFixed(2) : '')
+      : 'Hover or focus a dot to read the peptide and its position.'));
+}
+
+function CtlConstruct() {
+  const [copied, setCopied] = useState('');
+  const counts = { ctl: 0, lnk: 0 };
+  CTL_SEGS.forEach(function (s) { counts[s[0]] += s[1].length; });
+  let pos = 0;
+  const segs = CTL_SEGS.map(function (s, i) { const start = pos + 1; pos += s[1].length; return { k: s[0], seq: s[1], start: start, end: pos, i: i }; });
+  function copy() { copyText(CTL_CONSTRUCT, function (ok) { setCopied(ok ? 'Copied' : 'Select the sequence to copy'); setTimeout(function () { setCopied(''); }, 2000); }); }
+  return h('div', { className: 'ctl-block' },
+    h('div', { className: 'flex flex-wrap items-center justify-between gap-3' },
+      h('div', { className: 'min-w-0' },
+        h('div', { className: 'eyebrow' }, 'MHC-I (CTL) construct · ' + CTL_CONSTRUCT.length + ' aa'),
+        h('p', { className: 'muted text-sm mt-1' }, '5 CTL epitopes joined with KK linkers: ' + counts.ctl + ' epitope residues, ' + counts.lnk + ' linker residues.')),
+      h('button', { type: 'button', className: 'btn btn-ghost btn-sm', onClick: copy }, h(Icon, { n: 'Copy', size: 14 }), copied || 'Copy sequence')),
+    h('div', { className: 'seqbox mono', tabIndex: 0 },
+      segs.map(function (s) {
+        return h('span', { key: s.i, className: 'seg seg-' + s.k, title: (s.k === 'lnk' ? 'Linker ' : 'CTL epitope ') + s.seq + ' · residues ' + s.start + '–' + s.end }, s.seq);
+      })),
+    h('div', { className: 'eyebrow mt-5' }, 'Final vaccine construct · 270 aa'));
+}
+
+function ConstructView() {
+  const [hv, setHv] = useState(null);
+  const [copied, setCopied] = useState('');
+  const counts = { adj: 0, lnk: 0, htl: 0, bc: 0, ifn: 0 };
+  SEGS.forEach(function (s) { counts[s[0]] += s[1].length; });
+  const LEG = [['adj', 'Adjuvant', 'var(--accent)'], ['htl', 'HTL', PATH.htl.v], ['bc', 'B-cell', PATH.bc.v], ['ifn', 'IFN-γ', PATH.ifn.v], ['lnk', 'Linkers', 'var(--muted)']];
+  let pos = 0;
+  const segs = SEGS.map(function (s, i) { const start = pos + 1; pos += s[1].length; return { k: s[0], seq: s[1], start: start, end: pos, i: i }; });
+  function copy() { copyText(CONSTRUCT, function (ok) { setCopied(ok ? 'Copied' : 'Select the sequence to copy'); setTimeout(function () { setCopied(''); }, 2000); }); }
+  const cur = hv === null ? null : segs[hv];
+  return h('div', null,
+    h('div', { className: 'stack', role: 'img', 'aria-label': 'Construct composition by residue count' },
+      LEG.map(function (l) { return h('span', { key: l[0], style: { flexGrow: counts[l[0]], background: l[2] }, title: l[1] + ' ' + counts[l[0]] + ' aa' }); })),
+    h('div', { className: 'legend mt-2' },
+      LEG.map(function (l) { return h('span', { key: l[0] }, h('i', { className: 'sw sw-solid', style: { background: l[2] } }), l[1] + ' ', h('b', { className: 'mono' }, counts[l[0]]), ' aa'); })),
+    h('div', { className: 'seqbox mono', tabIndex: 0 },
+      segs.map(function (s) {
+        return h('span', { key: s.i, className: 'seg seg-' + s.k + (hv === s.i ? ' on' : ''), onMouseEnter: function () { setHv(s.i); }, onMouseLeave: function () { setHv(null); } }, s.seq);
+      })),
+    h('div', { className: 'flex flex-wrap items-center justify-between gap-3 mt-3' },
+      h('p', { className: 'chart-read !mt-0' }, cur
+        ? (cur.k === 'lnk' ? 'Linker ' : cur.k === 'adj' ? 'Adjuvant ' : PATH[cur.k].long + ' epitope ') + cur.seq + ' · residues ' + cur.start + '–' + cur.end
+        : '270 residues. Hover a segment to read its residue range.'),
+      h('button', { type: 'button', className: 'btn btn-ghost btn-sm', onClick: copy }, h(Icon, { n: 'Copy', size: 14 }), copied || 'Copy sequence')));
+}
+
+function EpitopeTable() {
+  const [f, setF] = useState('all');
+  const rows = DATA.eps.filter(function (e) { return f === 'all' || e.t === f; });
+  const chips = [['all', 'All 20'], ['ctl', 'CTL 5'], ['htl', 'HTL 5'], ['bc', 'B-cell 5'], ['ifn', 'IFN-γ 5']];
+  return h('div', null,
+    h('div', { className: 'flex flex-wrap gap-2 mb-3' },
+      chips.map(function (c) { return h('button', { key: c[0], type: 'button', className: 'chip' + (f === c[0] ? ' chip-on' : ''), onClick: function () { setF(c[0]); } }, c[1]); })),
+    h('div', { className: 'scroll-x' },
+      h('table', { className: 'tbl' },
+        h('thead', null, h('tr', null, ['Pathway', 'Peptide', 'Residues', 'Prediction', 'Antigenicity', 'Allergen', 'Toxin'].map(function (c, i) { return h('th', { key: c, className: i >= 4 ? 'text-right' : '' }, c); }))),
+        h('tbody', null, rows.map(function (e) {
+          return h('tr', { key: e.t + e.p },
+            h('td', null, h('span', { className: 'pdot', style: { background: PATH[e.t].v } }), PATH[e.t].label, e.t === 'ctl' ? h('span', { className: 'node-tag ml-2' }, 'MHC-I construct') : null),
+            h('td', { className: 'mono' }, e.p),
+            h('td', { className: 'mono tabular' }, e.pos ? e.pos + '–' + (e.pos + e.p.length - 1) : ''),
+            h('td', { className: 'muted text-sm' }, e.n ? e.n + ' HLA alleles · top rank ' + e.rk : e.sc ? 'IFN-γ score ' + e.sc.toFixed(2) : e.t === 'bc' ? 'Linear/surface screen' : ''),
+            h('td', { className: 'mono tabular text-right' }, e.a ? e.a.toFixed(2) : ''),
+            h('td', { className: 'mono tabular text-right' }, e.al ? e.al.toFixed(2) : ''),
+            h('td', { className: 'mono tabular text-right' }, e.tx !== undefined ? e.tx.toFixed(2) : ''));
+        })))));
+}
+
+function Section(props) {
+  return h('section', { className: 'panel ' + (props.className || '') },
+    h('div', { className: 'sec-head' },
+      h('h2', { className: 'display text-lg' }, props.title),
+      props.note ? h('p', { className: 'muted text-sm' }, props.note) : null),
+    props.children);
+}
+
+function Tile(props) {
+  return h('div', { className: 'tile' },
+    h('span', { className: 'eyebrow' }, props.k),
+    h('span', { className: 'tile-v display tabular' }, props.v),
+    h('span', { className: 'muted text-sm' }, props.sub),
+    props.pill || null);
+}
+
+function ResultsView(props) {
+  const run = props.run;
+  const fresh = run.phase === 'done' && run.fresh;
+  const attention = [
+    { tone: 'warn', t: 'Predicted insoluble', d: 'The solubility model returns "Insoluble" with probability 0.77. Plan for a solubility tag or refolding before expression.' },
+    { tone: 'warn', t: 'Final construct was not re-screened', d: 'H-Vaccine Immuno-Screening shows "hasn\'t been executed", so antigenicity, allergenicity and toxicity of the assembled 270-aa construct are unchecked. Each epitope passed its own screen.' },
+    { tone: 'info', t: 'CTL epitopes sit in a separate construct', d: 'The report joins the 5 CTL epitopes with KK linkers into a 54-aa MHC-I construct. The final 270-aa vaccine sequence holds the HTL, B-cell and IFN-γ epitopes only.' },
+    { tone: 'info', t: 'Input-sequence properties look truncated', d: 'The first physicochemical table reports 9 residues (1,145 Da), not 1,300. Check the "Sequence as Amino Acid Only" step. Half-life and instability index are blank in both tables.' }
+  ];
+  return h('div', { className: 'flex flex-col gap-6' },
+    h('header', { className: 'flex flex-wrap items-end justify-between gap-4' },
+      h('div', { className: 'min-w-0' },
+        h('p', { className: 'eyebrow' }, 'Human vaccine target prediction report'),
+        h('h1', { className: 'display text-2xl sm:text-3xl mt-1 break-words' }, REPORT.id),
+        h('p', { className: 'muted mt-1' }, '1,300-residue conserved region · human host · 53 conserved peptides')),
+      h('div', { className: 'flex flex-wrap gap-2' },
+        h(Pill, { tone: 'good', icon: 'Check' }, 'Pipeline complete'),
+        h(Pill, { tone: 'warn', icon: ['TriangleAlert', 'AlertTriangle'] }, '1 node not executed'))),
+    h('p', { className: 'note-bar' }, h(Icon, { n: 'Info', size: 15 }),
+      fresh ? 'Fresh run for "' + (run.query || '') + '". This prototype always shows the saved report for ' + REPORT.id + '.' : 'Showing the saved report for ' + REPORT.id + '. Submit a query from Data Input to simulate a new run.'),
+    h('div', { className: 'grid gap-3 sm:grid-cols-2 xl:grid-cols-4' },
+      h(Tile, { k: 'Construct', v: '270 aa', sub: '28.56 kDa · pI 8.19' }),
+      h(Tile, { k: 'Epitopes selected', v: '20', sub: '5 CTL · 5 HTL · 5 B-cell · 5 IFN-γ' }),
+      h(Tile, { k: 'Solubility', v: 'Insoluble', sub: 'Model probability 0.77', pill: h(Pill, { tone: 'warn', icon: ['TriangleAlert', 'AlertTriangle'] }, 'Needs attention') }),
+      h(Tile, { k: 'TLR docking', v: '2 jobs', sub: 'TLR2 and TLR4, GRAMM-X' })),
+    h(Section, { title: 'Needs attention', note: 'Read from the report as generated.' },
+      h('ul', { className: 'attn' }, attention.map(function (a) {
+        return h('li', { key: a.t, className: 'attn-' + a.tone },
+          h('span', { className: 'attn-ico' }, h(Icon, { n: a.tone === 'warn' ? ['TriangleAlert', 'AlertTriangle'] : 'Info', size: 16 })),
+          h('div', { className: 'min-w-0' }, h('div', { className: 'font-semibold' }, a.t), h('div', { className: 'muted text-sm mt-0.5' }, a.d)));
+      }))),
+    h(Section, { title: 'Candidates by pathway', note: 'How many epitope candidates survived each filter.' }, h(Funnel, null)),
+    h(Section, { title: 'Epitope map', note: 'Where candidate regions and chosen epitopes sit along the conserved region.' }, h(EpitopeMap, null)),
+    h(Section, { title: 'Vaccine constructs', note: 'The MHC-I (CTL) construct and the final vaccine construct, as built in the report.' }, h(CtlConstruct, null), h(ConstructView, null)),
+    h('div', { className: 'grid gap-6 lg:grid-cols-2' },
+      h(Section, { title: 'Physicochemical properties', note: 'Whole 270-aa construct.' },
+        h('dl', { className: 'kv' },
+          [['Residues', '270'], ['Molecular weight', fmt(REPORT.mw, 2) + ' Da'], ['Theoretical pI', '8.19'], ['Aliphatic index', '47.81'], ['GRAVY', '−0.596'], ['Estimated half-life', 'not reported'], ['Instability index', 'not reported']].map(function (r) {
+            return h(React.Fragment, { key: r[0] }, h('dt', null, r[0]), h('dd', { className: 'mono tabular' + (r[1] === 'not reported' ? ' muted' : '') }, r[1]));
+          })),
+        h('div', { className: 'mt-4' },
+          h('div', { className: 'eyebrow mb-2' }, 'Charged residues'),
+          h('div', { className: 'stack stack-sm' },
+            h('span', { style: { flexGrow: 23, background: 'var(--s2)' } }), h('span', { style: { flexGrow: 25, background: 'var(--s1)' } })),
+          h('div', { className: 'legend mt-2' },
+            h('span', null, h('i', { className: 'sw sw-solid', style: { background: 'var(--s2)' } }), 'Negative ', h('b', { className: 'mono' }, 23)),
+            h('span', null, h('i', { className: 'sw sw-solid', style: { background: 'var(--s1)' } }), 'Positive ', h('b', { className: 'mono' }, 25))))),
+      h(Section, { title: 'TLR docking', note: 'Docking runs on the GRAMM server. Results open in a new tab.' },
+        h('div', { className: 'flex flex-col gap-3' },
+          [['TLR2', REPORT.tlr2, 'Job 139878'], ['TLR4', REPORT.tlr4, 'Job 139879']].map(function (d) {
+            return h('a', { key: d[0], className: 'dock', href: d[1], target: '_blank', rel: 'noopener noreferrer' },
+              h('div', { className: 'min-w-0' }, h('div', { className: 'font-semibold' }, d[0] + ' docking'), h('div', { className: 'muted text-xs mono mt-0.5' }, d[2])),
+              h(Icon, { n: 'ExternalLink', size: 16 }));
+          })))),
+    h(Section, { title: 'Selected epitopes', note: 'Scores come from the immuno-screening nodes. Allergen score above 0.4 and toxin score below 0 passed.' }, h(EpitopeTable, null)));
+}
+
+/* ====================================================================== APP */
+const TABS = [
+  { id: 'input', label: 'Data Input', short: 'Input', icon: ['ClipboardList'] },
+  { id: 'pipeline', label: 'Pipeline Execution', short: 'Pipeline', icon: ['Workflow'] },
+  { id: 'results', label: 'Results & Analytics', short: 'Results', icon: ['ChartColumn', 'BarChart3'] }
+];
+
+function App() {
+  const [tab, setTab] = useState('input');
+  const [form, setForm] = useState({ type: '', query: '' });
+  const [overlay, setOverlay] = useState(0);
+  const [autoGo, setAutoGo] = useState(false);
+  const [theme, setTheme] = useState(function () {
+    try { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e) { return 'light'; }
+  });
+  const [run, setRun] = useState({ phase: 'idle', t: 0, speed: 2, paused: false, fresh: false, query: '' });
+  const mainRef = useRef(null);
+
+  useEffect(function () { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
+
+  useEffect(function () {
+    if (run.phase !== 'running' || run.paused) return;
+    const id = setInterval(function () {
+      setRun(function (r) {
+        if (r.phase !== 'running') return r;
+        const t = r.t + 0.1 * r.speed;
+        if (t >= TOTAL) return Object.assign({}, r, { t: TOTAL, phase: 'done', fresh: true });
+        return Object.assign({}, r, { t: t });
+      });
+    }, 100);
+    return function () { clearInterval(id); };
+  }, [run.phase, run.paused, run.speed]);
+
+  useEffect(function () {
+    if (run.phase === 'done' && autoGo && tab === 'pipeline') {
+      const id = setTimeout(function () { setTab('results'); setAutoGo(false); }, 3200);
+      return function () { clearTimeout(id); };
+    }
+  }, [run.phase, autoGo, tab]);
+
+  useEffect(function () { window.scrollTo(0, 0); }, [tab]);
+
+  function startRun(q) {
+    setRun({ phase: 'running', t: 0, speed: 2, paused: false, fresh: false, query: q });
+    setAutoGo(true);
+    setTab('pipeline');
+  }
+  function submit() {
+    setOverlay(1);
+    setTimeout(function () { setOverlay(2); }, 600);
+    setTimeout(function () { setOverlay(3); }, 1150);
+    setTimeout(function () { setOverlay(0); startRun(form.query.trim().slice(0, 80)); }, 1700);
+  }
+  function startDemo() { setForm({ type: DEMO.type, query: DEMO.query }); startRun(DEMO.query); }
+
+  const status = {
+    input: run.phase !== 'idle' ? 'done' : '',
+    pipeline: run.phase === 'running' ? 'running' : run.phase === 'done' ? 'done' : '',
+    results: run.phase === 'done' && tab !== 'results' ? 'new' : ''
+  };
+
+  let view;
+  if (tab === 'input') view = h(InputView, { form: form, setForm: setForm, onSubmit: submit, go: setTab });
+  else if (tab === 'pipeline') view = h(PipelineView, {
+    run: run, autoGo: autoGo, go: setTab, startDemo: startDemo,
+    cancelAuto: function () { setAutoGo(false); },
+    setSpeed: function (s) { setRun(function (r) { return Object.assign({}, r, { speed: s }); }); },
+    togglePause: function () { setRun(function (r) { return Object.assign({}, r, { paused: !r.paused }); }); },
+    skip: function () { setRun(function (r) { return Object.assign({}, r, { t: TOTAL, phase: 'done', fresh: true }); }); },
+    replay: function () { setRun(function (r) { return Object.assign({}, r, { phase: 'running', t: 0, paused: false, fresh: false }); }); setAutoGo(true); }
+  });
+  else view = h(ResultsView, { run: run });
+
+  const steps = ['Validating input', 'Creating execution', 'Opening pipeline'];
+
+  return h('div', { className: 'app' },
+    h('header', { className: 'topbar' },
+      h('div', { className: 'topbar-in' },
+        h('div', { className: 'brand' },
+          h('img', { className: 'brand-logo', src: LOGO_MARK, alt: 'vAxIgene' }),
+          h('span', { className: 'brand-sub' }, 'Epitope vaccine design')),
+        h('nav', { className: 'tabs', role: 'tablist', 'aria-label': 'Workflow views' },
+          TABS.map(function (tb, i) {
+            const st = status[tb.id];
+            return h('button', { key: tb.id, role: 'tab', type: 'button', 'aria-selected': tab === tb.id, className: 'tab' + (tab === tb.id ? ' tab-on' : ''), onClick: function () { setTab(tb.id); } },
+              h(Icon, { n: tb.icon, size: 16 }),
+              h('span', { className: 'tab-label' }, tb.label),
+              h('span', { className: 'tab-short' }, tb.short),
+              st === 'running' ? h(Icon, { n: ['LoaderCircle', 'Loader2'], size: 13, className: 'spin tab-st' }) : st === 'done' ? h('span', { className: 'tab-st tab-done' }, h(Icon, { n: 'Check', size: 11, sw: 3 })) : st === 'new' ? h('span', { className: 'tab-new' }) : null);
+          })),
+        h('button', { type: 'button', className: 'icon-btn', 'aria-label': theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme', onClick: function () { setTheme(theme === 'dark' ? 'light' : 'dark'); } },
+          h(Icon, { n: theme === 'dark' ? 'Sun' : 'Moon', size: 17 })))),
+    h('main', { className: 'main', ref: mainRef }, h('div', { key: tab, className: 'view' }, view)),
+    overlay ? h('div', { className: 'overlay', role: 'status', 'aria-live': 'polite' },
+      h('div', { className: 'overlay-card' },
+        h('div', { className: 'overlay-spin' }, h(Icon, { n: ['LoaderCircle', 'Loader2'], size: 26, className: 'spin' })),
+        h('div', { className: 'font-semibold text-lg mt-3' }, 'Submitting to n8n'),
+        h('ul', { className: 'overlay-steps' }, steps.map(function (s, i) {
+          const st = overlay > i + 1 ? 'done' : overlay === i + 1 ? 'run' : 'wait';
+          return h('li', { key: s, className: 'ostep ostep-' + st },
+            h('span', { className: 'ostep-ico' }, st === 'done' ? h(Icon, { n: 'Check', size: 11, sw: 3 }) : null), s);
+        })))) : null);
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+
+</script>
+</body>
+</html>
